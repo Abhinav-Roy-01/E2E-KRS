@@ -1,0 +1,24 @@
+version: "3.9"
+
+services:
+  canonical-postgres:
+    image: pgvector/pgvector:pg16
+    container_name: aicte-canonical-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: aicte_canonical
+    ports:
+      - "55432:5432"
+    volumes:
+      - aicte_canonical_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d aicte_canonical"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+volumes:
+  aicte_canonical_pgdata:

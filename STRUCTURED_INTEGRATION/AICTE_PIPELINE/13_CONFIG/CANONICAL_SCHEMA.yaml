@@ -1,0 +1,38 @@
+# CANONICAL AICTE DATA MODEL
+# Every source field must eventually map to one of these canonical fields.
+# type: structured | relational | contextual
+
+institution:
+  institution_id:      { type: structured, dtype: string, pk: true }
+  institution_name:    { type: structured, dtype: string }
+  state:                { type: structured, dtype: string }
+  approval_status:     { type: structured, dtype: boolean }
+  nirf_rank:            { type: structured, dtype: integer }
+  naac_grade:           { type: structured, dtype: string }
+
+course:
+  course_id:            { type: structured, dtype: string, pk: true }
+  institution_id:       { type: relational, references: institution.institution_id }
+  course_name:          { type: structured, dtype: string }
+
+faculty:
+  faculty_id:           { type: structured, dtype: string, pk: true }
+  institution_id:       { type: relational, references: institution.institution_id }
+  faculty_name:         { type: structured, dtype: string }
+  research_interests:   { type: contextual }
+
+student:
+  student_id:           { type: structured, dtype: string, pk: true }
+  institution_id:       { type: relational, references: institution.institution_id }
+  student_name:         { type: structured, dtype: string }
+
+internship:
+  internship_id:        { type: structured, dtype: string, pk: true }
+  student_id:            { type: relational, references: student.student_id }
+  company:               { type: structured, dtype: string }
+  duration:              { type: structured, dtype: string }
+  internship_year:      { type: structured, dtype: integer }
+  performance_remark:   { type: contextual }
+
+# Fields that don't cleanly match a known name fall back to the
+# LLM-assisted classifier in 07_CONTEXT_CLASSIFICATION.

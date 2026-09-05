@@ -1,0 +1,6 @@
+requests
+psycopg[binary]
+langdetect
+transformers
+torch
+IndicTransToolkit

@@ -1,0 +1,46 @@
+# Central pipeline configuration
+pipeline:
+  use_sample_data: false
+  log_level: INFO
+
+sources:
+  - name: institutes
+    type: mysql
+    source_database: aicte_institutes
+    table: institutes
+    sample_file: DATA/SAMPLE/SOURCE_A_INSTITUTION.csv
+  - name: courses
+    type: postgres
+    source_database: courses_db
+    table: courses
+    sample_file: DATA/SAMPLE/SOURCE_B_INSTITUTION.csv
+  - name: faculty
+    type: postgres
+    source_database: faculty_db
+    table: faculty
+    sample_file: DATA/SAMPLE/SOURCE_C_INSTITUTION.json
+  - name: scholarships
+    type: mongo
+    source_database: aicte_scholarships
+    collection: scholarships
+
+source_connections:
+  mysql_uri: mysql+mysqlconnector://aicte_app:aicte_pass@localhost:3307/aicte_institutes
+  postgres_courses_uri: postgresql+psycopg://postgres:postgres@localhost:5433/courses_db
+  postgres_faculty_uri: postgresql+psycopg://postgres:postgres@localhost:5433/faculty_db
+  mongo_uri: mongodb://localhost:27017
+  mongo_db: aicte_scholarships
+
+entity_resolution:
+  match_threshold: 0.90
+  blocking_fields: [state]
+
+embedding:
+  model: sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+  dimension: 768
+  batch_size: 32
+
+retrieval:
+  top_k: 5
+  hybrid_weight_structured: 0.5
+  hybrid_weight_vector: 0.5

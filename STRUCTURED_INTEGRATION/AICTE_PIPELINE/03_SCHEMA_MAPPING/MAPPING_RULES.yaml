@@ -1,0 +1,72 @@
+# Explicit source-field -> canonical-field mapping.
+# Extend this as new sources / fields are discovered in 02_SCHEMA_DISCOVERY.
+
+institution_db:      # source name -> canonical name
+  college_id: institution_id
+  college_name: institution_name
+  state: state
+  approval: approval_status
+  nirf_rank: nirf_rank
+  internship_student: student_name
+
+course_db:
+  inst_code: institution_id
+  institution_name: institution_name
+  state_name: state
+  approval_status: approval_status
+  naac_grade: naac_grade
+  internship_student: student_name
+
+faculty_db:
+  id: institution_id
+  institute: institution_name
+  state: state
+  approved: approval_status
+
+institutes:
+  AICTE_Code: aicte_code
+  Institute_Name: institution_name
+  State: state
+  District: district
+  City: city
+  Institute_Type: institution_type
+  Ownership: ownership
+  Approval_Status: approval_status
+  Current_Status: current_status
+  Year_Established: year_established
+  Is_Autonomous: is_autonomous
+  NBA_Accredited: nba_accredited
+  Accreditation_Valid_Until: accreditation_valid_until
+  Last_Updated: last_updated
+
+courses:
+  course_id: course_id
+  college_name: institution_name
+  course_name: course_name
+  department: department
+  duration_years: duration_years
+  intake_capacity: intake_capacity
+  fee_per_year: fee_per_year
+  course_status: course_status
+  last_synced: last_synced
+
+faculty:
+  faculty_id: faculty_id
+  full_name: faculty_name
+  institute_ref: institution_name
+  designation: designation
+  qualification: qualification
+  specialization: research_interests
+  department: department
+  years_of_experience: years_of_experience
+  date_joined: date_joined
+  updated_on: updated_on
+
+scholarships:
+  scheme_name: scheme_name
+  administering_body: administering_body
+  last_updated: last_updated
+  eligibility: eligibility
+  applicable_states: applicable_states
+  applicable_institutes: applicable_institutes
+  amount: amount
