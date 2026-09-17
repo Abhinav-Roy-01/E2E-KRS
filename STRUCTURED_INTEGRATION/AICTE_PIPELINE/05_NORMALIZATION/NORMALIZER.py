@@ -1,6 +1,6 @@
 """
 05_NORMALIZATION — cast fields into their canonical dtypes (per
-13_CONFIG/CANONICAL_SCHEMA.yaml) and drop the source-specific columns that
+13_CONFIG/CANONICAL_SCHEMA.YAML) and drop the source-specific columns that
 have already served their purpose (e.g. after mapping+standardization).
 """
 from pathlib import Path
@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-SCHEMA_PATH = Path(__file__).resolve().parents[1] / "13_CONFIG" / "CANONICAL_SCHEMA.yaml"
+SCHEMA_PATH = Path(__file__).resolve().parents[1] / "13_CONFIG" / "CANONICAL_SCHEMA.YAML"
 
 DTYPE_CASTERS = {
     "string": str,

@@ -35,8 +35,9 @@ CONNECT → INGEST → DISCOVER → MAP → STANDARDIZE → NORMALIZE → DEDUPL
   the designed upgrade — see 06_DEDUPLICATION/ENTITY_RESOLVER.py docstring).
   In the current sample run it fails to merge one of the three "IIT Delhi"
   records because of a malformed state value — a good first bug to fix.
-- `07_CONTEXT_CLASSIFICATION`'s LLM fallback is stubbed, not wired to the
-  Anthropic API yet.
+- `07_CONTEXT_CLASSIFICATION`'s LLM fallback is stubbed, not wired to local
+  Ollama (qwen3:8b) yet -- see `WAREHOUSE/INTERMEDIATE/APP/CLASSIFIER.py`
+  for the pattern to follow.
 - `08_POSTGRESQL`, `10_PGVECTOR`, `11_RETRIEVAL` all require a live
   Postgres+pgvector instance to actually run (they're not exercised by
   `MAIN.py` on sample data alone).

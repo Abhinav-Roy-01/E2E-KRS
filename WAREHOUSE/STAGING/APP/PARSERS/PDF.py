@@ -15,19 +15,13 @@ than assuming it works.
 Plain text/markdown files (.md, .txt) are handled by the caller directly
 (decode bytes) -- they never reach this module.
 """
+import sys
+from pathlib import Path
+
 import fitz  # PyMuPDF
-from paddleocr import PaddleOCR
 
-_ocr_engine = None
-
-
-def _get_ocr_engine():
-    global _ocr_engine
-    if _ocr_engine is None:
-        # lang="en" is PaddleOCR's default multi-script detection model;
-        # swap per-language if you need to force a specific script.
-        _ocr_engine = PaddleOCR(use_angle_cls=True, lang="en")
-    return _ocr_engine
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # STAGING/APP
+from OCR_ENGINE import get_ocr_engine  # shared with PARSERS/IMAGE.py
 
 
 def extract_text_pdf(filepath: str) -> str:
@@ -41,7 +35,7 @@ def extract_text_pdf(filepath: str) -> str:
 def extract_text_ocr(filepath: str) -> str:
     """Fallback for scanned PDFs with no selectable text, via PaddleOCR-VL."""
     doc = fitz.open(filepath)
-    engine = _get_ocr_engine()
+    engine = get_ocr_engine()
     full_text = []
 
     for page in doc:

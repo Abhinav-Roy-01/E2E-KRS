@@ -1,6 +1,6 @@
 """
 08_POSTGRESQL — load resolved, classified structured/relational data into
-PostgreSQL. Run DATABASE_SCHEMA.sql once first (psql -f DATABASE_SCHEMA.sql).
+PostgreSQL. Run DATABASE_SCHEMA.SQL once first (psql -f DATABASE_SCHEMA.SQL).
 
 Every upsert here is paired with an entity_mapping + data_lineage row —
 that pairing is not optional decoration, it's what makes every answer
@@ -18,7 +18,7 @@ except ImportError:
 
 def get_connection():
     if psycopg is None:
-        raise RuntimeError("psycopg not installed — pip install -r REQUIREMENTS/REQUIREMENTS.txt")
+        raise RuntimeError("psycopg not installed — pip install -r REQUIREMENTS/REQUIREMENTS.TXT")
     return psycopg.connect(
         host=os.getenv("POSTGRES_HOST", "localhost"),
         port=os.getenv("POSTGRES_PORT", "5432"),
@@ -180,5 +180,5 @@ def load_all(conn, resolved_df: pd.DataFrame) -> None:
 
 if __name__ == "__main__":
     print("This script expects a live Postgres connection (.env). "
-          "Run DATABASE_SCHEMA.sql first, then call load_all() "
+          "Run DATABASE_SCHEMA.SQL first, then call load_all() "
           "with the entity-resolved dataframe from 06_DEDUPLICATION.")

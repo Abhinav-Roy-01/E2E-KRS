@@ -9,10 +9,11 @@ score, since intermediate_documents.classification_confidence is what the
 routing engine will later use to decide auto-route vs human review.
 """
 import json
+import os
 import requests
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL = "qwen3:8b"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434") + "/api/generate"
+MODEL = os.environ.get("LLM_MODEL", "qwen3:8b")
 
 DEPARTMENTS = ["Engineering", "HR", "Finance", "Safety", "Procurement", "Legal"]
 DOC_TYPES = ["circular", "invoice", "drawing", "report", "contract", "policy", "notice"]

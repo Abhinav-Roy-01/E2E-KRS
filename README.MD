@@ -86,7 +86,7 @@ referenced by literal filename, not import path.
 1. **Freeze this schema** — review as a team before changing anything in `DATABASE/SCHEMA/`.
 2. **Bring up infra**:
    ```
-   docker compose -f DOCKER-COMPOSE.YML up postgres redis chroma minio
+   docker compose -f DOCKER-COMPOSE.YML up postgres redis minio
    ```
 3. **Ingestion service** — hash-dedup + raw layer writes, before anything else.
 4. **Warehouse staging/intermediate logic** — extraction, classification, similarity-dedup.

@@ -9,5 +9,10 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .vscode/
+.idea/
 *.swp
 *.log
+*.pem
+*.key
+*.egg-info/
+.pytest_cache/

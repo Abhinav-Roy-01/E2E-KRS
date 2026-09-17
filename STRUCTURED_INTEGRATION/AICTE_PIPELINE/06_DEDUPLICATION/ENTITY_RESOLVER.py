@@ -6,7 +6,7 @@ MVP: a lightweight rule-based matcher (normalized-name blocking + token
 overlap) — good enough to prove the pipeline end-to-end on sample data.
 Swap `match_entities` for a Splink `Linker` (see splink.readthedocs.io) once
 volumes/ambiguity justify probabilistic matching — the match_threshold and
-blocking_fields are already externalized in 13_CONFIG/CONFIG.yaml for that.
+blocking_fields are already externalized in 13_CONFIG/CONFIG.YAML for that.
 """
 import re
 from pathlib import Path
@@ -14,7 +14,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-CONFIG_PATH = Path(__file__).resolve().parents[1] / "13_CONFIG" / "CONFIG.yaml"
+CONFIG_PATH = Path(__file__).resolve().parents[1] / "13_CONFIG" / "CONFIG.YAML"
 
 
 def _normalize_name(name: str | object) -> str:

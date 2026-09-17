@@ -1,7 +1,7 @@
 """
 10_PGVECTOR — persist context_text + embedding + entity metadata into the
 CONTEXT_DOCUMENT table (lives inside PostgreSQL via the pgvector extension —
-see 08_POSTGRESQL/DATABASE_SCHEMA.sql for the CREATE EXTENSION line).
+see 08_POSTGRESQL/DATABASE_SCHEMA.SQL for the CREATE EXTENSION line).
 """
 import os
 
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS context_document (
     entity_type            TEXT NOT NULL,
     context_type           TEXT,
     context_text           TEXT NOT NULL,
-    embedding                VECTOR(768),
+    embedding                VECTOR(1024),  -- bge-m3 dimension (was 768 for the old sentence-transformers model)
     source_database          TEXT,
     source_table              TEXT,
     source_record_id          TEXT,
@@ -49,7 +49,7 @@ def build_vector_index(conn) -> None:
 
 def get_connection():
     if psycopg is None:
-        raise RuntimeError("psycopg/pgvector not installed — pip install -r REQUIREMENTS/REQUIREMENTS.txt")
+        raise RuntimeError("psycopg/pgvector not installed — pip install -r REQUIREMENTS/REQUIREMENTS.TXT")
     conn = psycopg.connect(
         host=os.getenv("POSTGRES_HOST", "localhost"),
         port=os.getenv("POSTGRES_PORT", "5432"),

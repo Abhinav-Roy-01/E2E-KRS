@@ -6,11 +6,10 @@ context to the LLM for answer synthesis. LLM never invents facts — it only
 reasons over what retrieval hands it (design doc Rule 2).
 """
 import os
+import requests
 
-try:
-    import anthropic
-except ImportError:
-    anthropic = None
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://localhost:11434")
+LLM_MODEL = os.environ.get("LLM_MODEL", "qwen3:8b")
 
 
 def classify_query_type(question: str) -> str:
@@ -49,10 +48,11 @@ def run_vector_query(question: str, top_k: int = 5) -> list[dict]:
 
 def _mock_synthesize(question: str, structured_result: str, contextual_results: list[dict]) -> str:
     """
-    Demo-mode answer synthesis — no LLM call. Stitches the retrieved context
-    into a readable answer so the pipeline is demoable without an API key.
-    Swap back to the real Anthropic call in synthesize_answer() once a key
-    is available; nothing else in the pipeline needs to change.
+    Offline fallback -- no LLM call. Stitches the retrieved context into a
+    readable answer so the pipeline stays demoable even if the local Ollama
+    instance isn't reachable (e.g. mid-setup, or model not pulled yet).
+    synthesize_answer() falls back here automatically on connection failure;
+    nothing else in the pipeline needs to change.
     """
     if not contextual_results and not structured_result.strip("[]").strip():
         return f"No grounded data was found to answer: \"{question}\""
@@ -74,11 +74,14 @@ def _mock_synthesize(question: str, structured_result: str, contextual_results: 
 
 
 def synthesize_answer(question: str, structured_result: str, contextual_results: list[dict]) -> str:
-    api_key = os.getenv("ANTHROPIC_API_KEY", "")
-    if anthropic is None or not api_key or api_key == "your_key_here":
-        return _mock_synthesize(question, structured_result, contextual_results)
-    
-    client = anthropic.Anthropic()
+    """
+    Grounded answer synthesis via local Qwen3:8B (Ollama) -- deliberately not
+    a cloud LLM API. This project's core pitch is that institutional/
+    government data never leaves local infra; calling an external API here
+    would contradict that on the one step that actually touches retrieved
+    data. Falls back to _mock_synthesize() if Ollama isn't reachable, so the
+    pipeline stays demoable mid-setup rather than crashing.
+    """
     context_block = "\n".join(f"- {r.get('context_text')}" for r in contextual_results) or "(none)"
     prompt = (
         f"Answer the question using ONLY the grounded data below. "
@@ -87,12 +90,17 @@ def synthesize_answer(question: str, structured_result: str, contextual_results:
         f"STRUCTURED DATA (from PostgreSQL): {structured_result}\n\n"
         f"CONTEXTUAL DATA (from pgvector): {context_block}"
     )
-    response = client.messages.create(
-        model=os.getenv("LLM_MODEL", "claude-sonnet-4-6"),
-        max_tokens=1000,
-        messages=[{"role": "user", "content": prompt}],
-    )
-    return "".join(block.text for block in response.content if block.type == "text")
+    try:
+        response = requests.post(
+            f"{OLLAMA_URL}/api/generate",
+            json={"model": LLM_MODEL, "prompt": prompt, "stream": False},
+            timeout=120,
+        )
+        response.raise_for_status()
+        return response.json()["response"]
+    except requests.RequestException as e:
+        print(f"[synthesize_answer] Ollama unreachable ({e}), falling back to offline synthesis.")
+        return _mock_synthesize(question, structured_result, contextual_results)
 
 
 def answer_question(question: str) -> str:

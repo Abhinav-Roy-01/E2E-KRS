@@ -92,7 +92,7 @@ CONNECT → INGEST → DISCOVER → MAP → STANDARDIZE → NORMALIZE → DEDUPL
 |---|---|---|
 | `01_INGESTION` | Ingest | Pull raw records from MySQL/Postgres/Mongo sample sources, stamp with lineage |
 | `02_SCHEMA_DISCOVERY` | Discover | Inspect columns, types, sample values per source |
-| `03_SCHEMA_MAPPING` | Map | Map source fields → canonical AICTE schema (see `MAPPING_RULES.yaml`) |
+| `03_SCHEMA_MAPPING` | Map | Map source fields → canonical AICTE schema (see `MAPPING_RULES.YAML`) |
 | `04_STANDARDIZATION` | Standardize | Normalize states, dates, booleans, text case |
 | `05_NORMALIZATION` | Normalize | Cast dtypes into canonical shapes |
 | `06_DEDUPLICATION` | Resolve | Fuzzy-match duplicate entities → master IDs (institutions + internships) |
@@ -102,8 +102,8 @@ CONNECT → INGEST → DISCOVER → MAP → STANDARDIZE → NORMALIZE → DEDUPL
 | `10_PGVECTOR` | Index | Store embeddings + metadata; vector similarity search |
 | `11_RETRIEVAL` | Retrieve | Hybrid retrieval: structured query + vector search + LLM synthesis |
 | `12_TESTS` | Test | Pytest suite covering the deterministic pipeline stages |
-| `13_CONFIG` | — | `CONFIG.yaml` (pipeline settings), `CANONICAL_SCHEMA.yaml` (field types) |
-| `14_DOCUMENTATION` | — | `ARCHITECTURE.md` — design rationale, rules, known limitations |
+| `13_CONFIG` | — | `CONFIG.YAML` (pipeline settings), `CANONICAL_SCHEMA.YAML` (field types) |
+| `14_DOCUMENTATION` | — | `ARCHITECTURE.MD` — design rationale, rules, known limitations |
 | `DATA/SAMPLE` | — | Deliberately messy 3-source sample data (mirrors real AICTE inconsistency) |
 
 A note on file naming: folders and script *stems* are CAPS
@@ -120,10 +120,11 @@ lowercase `.py` suffix.
 \`\`\`powershell
 python -m venv venv
 venv\Scripts\activate
-pip install python-dotenv pandas pyyaml psycopg[binary] pgvector sentence-transformers anthropic
+pip install python-dotenv pandas pyyaml psycopg[binary] pgvector requests
+# (embeddings + answer synthesis are both local via Ollama -- `ollama pull bge-m3` and `ollama pull qwen3:8b`)
 \`\`\`
 
-(`REQUIREMENTS/REQUIREMENTS.txt` has the full pinned list; `splink` and
+(`REQUIREMENTS/REQUIREMENTS.TXT` has the full pinned list; `splink` and
 `great-expectations` in there aren't wired into any code yet and can be
 skipped if they fail to build on your Python version.)
 
@@ -140,7 +141,7 @@ Enable the extension and load the schema:
 
 \`\`\`powershell
 docker exec -it aicte-postgres psql -U postgres -d aicte_canonical -c "CREATE EXTENSION vector;"
-Get-Content 08_POSTGRESQL/DATABASE_SCHEMA.sql | docker exec -i aicte-postgres psql -U postgres -d aicte_canonical
+Get-Content 08_POSTGRESQL/DATABASE_SCHEMA.SQL | docker exec -i aicte-postgres psql -U postgres -d aicte_canonical
 \`\`\`
 
 Create the pgvector context table (separate step — see note below on why
@@ -234,7 +235,7 @@ themselves.
 
 1. **Drop your file in `DATA/SAMPLE/`** — CSV or JSON, any column names.
 
-2. **Register the source** in `13_CONFIG/CONFIG.yaml` under `sources:`:
+2. **Register the source** in `13_CONFIG/CONFIG.YAML` under `sources:`:
    \`\`\`yaml
    sources:
      - name: your_source_db
@@ -246,7 +247,7 @@ themselves.
    — one more `load_from_sample(...)` call following the existing pattern.
 
 4. **Map its fields to the canonical schema** in
-   `03_SCHEMA_MAPPING/MAPPING_RULES.yaml`:
+   `03_SCHEMA_MAPPING/MAPPING_RULES.YAML`:
    \`\`\`yaml
    your_source_db:
      your_weird_column_name: institution_name
@@ -258,7 +259,7 @@ themselves.
 
 5. **If it introduces a genuinely new field type** (not institution/course/
    faculty/student/internship), add it to
-   `13_CONFIG/CANONICAL_SCHEMA.yaml` with the right `type:`
+   `13_CONFIG/CANONICAL_SCHEMA.YAML` with the right `type:`
    (`structured` / `relational` / `contextual`) — this is what
    `07_CONTEXT_CLASSIFICATION` uses to decide Postgres vs. pgvector.
 
@@ -294,7 +295,7 @@ themselves.
   or (worse) silently misbehave depending on the psycopg/pgvector version
   combination.
 
-See `14_DOCUMENTATION/ARCHITECTURE.md` for the full design rationale, the
+See `14_DOCUMENTATION/ARCHITECTURE.MD` for the full design rationale, the
 three-types-of-information rule, and what's intentionally deferred
 (Splink, NiFi, Kafka, Airflow — see that doc for how each one plugs in
 later without a rewrite).

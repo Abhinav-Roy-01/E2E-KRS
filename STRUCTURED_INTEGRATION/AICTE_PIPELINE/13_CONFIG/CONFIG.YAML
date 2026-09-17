@@ -36,8 +36,8 @@ entity_resolution:
   blocking_fields: [state]
 
 embedding:
-  model: sentence-transformers/paraphrase-multilingual-mpnet-base-v2
-  dimension: 768
+  model: bge-m3   # served locally via Ollama -- see OLLAMA_URL in .env
+  dimension: 1024
   batch_size: 32
 
 retrieval:

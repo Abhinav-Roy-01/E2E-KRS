@@ -1,7 +1,7 @@
 # FEDERATED_QUERY_SERVICE
 
 The single query layer above both arms -- decides whether a query needs
-document search (RAG_SERVICE, hybrid vector+BM25 over Chroma/Postgres),
+document search (RAG_SERVICE, hybrid vector+BM25 over Postgres/pgvector),
 structured/institutional search (AICTE_PIPELINE/11_RETRIEVAL, hybrid
 Postgres+pgvector), or both -- and merges the results.
 

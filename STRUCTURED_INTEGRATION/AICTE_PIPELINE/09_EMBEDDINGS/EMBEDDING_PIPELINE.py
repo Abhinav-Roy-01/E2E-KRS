@@ -33,7 +33,7 @@ def process_internship_records(internships_df):
         # 3. Write it to pgvector, tagged with what it is and where it traces back to
         insert_context(
             conn,
-            entity_id=row["internship_id"],       # the pk from CANONICAL_SCHEMA.yaml
+            entity_id=row["internship_id"],       # the pk from CANONICAL_SCHEMA.YAML
             entity_type="internship",               # what kind of entity this describes
             context_type="performance_remark",       # what kind of context this is
             context_text=context_text,

@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16
+    image: pgvector/pgvector:pg16   # plain postgres:16 has no `vector` extension -- needed since the Chroma->pgvector migration
     restart: unless-stopped
     environment:
       POSTGRES_USER: ekrs
@@ -23,14 +23,6 @@ services:
     ports:
       - "6379:6379"
 
-  chroma:
-    image: chromadb/chroma:latest
-    restart: unless-stopped
-    ports:
-      - "8001:8000"
-    volumes:
-      - chroma_data:/chroma/chroma
-
   minio:
     image: minio/minio:latest
     restart: unless-stopped
@@ -51,5 +43,4 @@ services:
 
 volumes:
   pg_data:
-  chroma_data:
   minio_data:

@@ -1,8 +1,12 @@
 """
 Picks up raw_documents where raw_status='received', downloads from MinIO,
-extracts text (PDF via PyMuPDF/PaddleOCR-VL, .md/.txt read directly),
-detects language, writes a staging_documents row, advances
-raw_documents.raw_status to 'staged'.
+extracts text (PDF via PyMuPDF/PaddleOCR fallback, images via PaddleOCR
+directly, .md/.txt read directly), detects language, writes a
+staging_documents row, advances raw_documents.raw_status to 'staged'.
+
+Image support (jpg/jpeg/png) exists specifically for photographed
+documents -- WhatsApp forwards, phone photos of notices/circulars -- which
+are a real and frequent government-intake case, not an edge case.
 
 Usage:
     python MAIN.py
@@ -14,12 +18,17 @@ from DB import get_connection
 from MINIO_CLIENT import download_to_path
 from LANG_DETECT import detect_language
 from PARSERS.PDF import parse_pdf
+from PARSERS.IMAGE import parse_image
+
+IMAGE_FILETYPES = ("jpg", "jpeg", "png")
 
 
 def extract_text(local_path: str, filetype: str) -> tuple[str, bool]:
     """Returns (text, ocr_used)."""
     if filetype == "pdf":
         return parse_pdf(local_path)
+    if filetype in IMAGE_FILETYPES:
+        return parse_image(local_path)
     if filetype in ("md", "txt"):
         with open(local_path, "r", encoding="utf-8", errors="replace") as f:
             return f.read(), False

@@ -1,6 +1,6 @@
 """
 03_SCHEMA_MAPPING — rename each source's fields to the canonical AICTE
-schema using the explicit mapping table in MAPPING_RULES.yaml. This is the
+schema using the explicit mapping table in MAPPING_RULES.YAML. This is the
 "semantic bridge" between legacy field names and the unified model.
 """
 from pathlib import Path
@@ -8,7 +8,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-RULES_PATH = Path(__file__).parent / "MAPPING_RULES.yaml"
+RULES_PATH = Path(__file__).parent / "MAPPING_RULES.YAML"
 
 
 def load_mapping_rules() -> dict:

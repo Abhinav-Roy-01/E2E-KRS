@@ -12,11 +12,17 @@ in WAREHOUSE/INTERMEDIATE, after text has actually been extracted.
 import hashlib
 import uuid
 
-from fastapi import FastAPI, UploadFile, File
+from fastapi import Depends, FastAPI, UploadFile, File, HTTPException
+from AUTH import require_api_key
 from STORAGE import upload_file, ensure_bucket
 from DB import get_connection
 
 app = FastAPI(title="E2E-KRS Ingestion Service")
+
+# Every source (folder watch, WhatsApp, future email) funnels through this
+# one filetype allow-list -- reject anything else before it's stored, not
+# after. Extend this list, not the endpoint logic, when adding a filetype.
+ALLOWED_FILETYPES = {"pdf", "md", "txt", "jpg", "jpeg", "png"}
 
 
 @app.on_event("startup")
@@ -29,11 +35,14 @@ async def health():
     return {"status": "ok"}
 
 
-@app.post("/ingest")
+@app.post("/ingest", dependencies=[Depends(require_api_key)])
 async def ingest(file: UploadFile = File(...), source: str = "manual_upload"):
+    filetype = file.filename.split(".")[-1].lower()
+    if filetype not in ALLOWED_FILETYPES:
+        raise HTTPException(status_code=400, detail=f"Unsupported filetype: {filetype}")
+
     file_bytes = await file.read()
     sha256_hash = hashlib.sha256(file_bytes).hexdigest()
-    filetype = file.filename.split(".")[-1].lower()
 
     conn = get_connection()
     cur = conn.cursor()

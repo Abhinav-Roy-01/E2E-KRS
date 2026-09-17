@@ -19,14 +19,12 @@ great-expectations==1.2.4
 # Entity resolution
 splink==4.0.6
 
-# Embeddings
-sentence-transformers==3.2.1
+# Embeddings + LLM synthesis -- both local, via Ollama HTTP API
+# (no sentence-transformers/torch, no cloud LLM SDK -- see .ENV.EXAMPLE)
+requests
 
 # Vector storage (pgvector python bindings)
 pgvector==0.3.6
-
-# LLM
-anthropic==0.39.0
 
 # API layer (later phase)
 fastapi==0.115.5

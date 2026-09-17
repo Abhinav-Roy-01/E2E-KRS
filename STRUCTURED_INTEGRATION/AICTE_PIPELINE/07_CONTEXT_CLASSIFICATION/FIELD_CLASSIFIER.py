@@ -9,7 +9,7 @@ from pathlib import Path
 
 import yaml
 
-SCHEMA_PATH = Path(__file__).resolve().parents[1] / "13_CONFIG" / "CANONICAL_SCHEMA.yaml"
+SCHEMA_PATH = Path(__file__).resolve().parents[1] / "13_CONFIG" / "CANONICAL_SCHEMA.YAML"
 
 # Field-name patterns that are contextual almost by definition.
 CONTEXTUAL_NAME_HINTS = {
@@ -22,7 +22,7 @@ AMBIGUOUS_FALLBACK_NEEDED = {"notes", "summary", "details"}  # -> LLM classifier
 
 
 def load_field_types() -> dict[str, str]:
-    """Flatten CANONICAL_SCHEMA.yaml into {field_name: 'structured'|'relational'|'contextual'}."""
+    """Flatten CANONICAL_SCHEMA.YAML into {field_name: 'structured'|'relational'|'contextual'}."""
     schema = yaml.safe_load(SCHEMA_PATH.read_text())
     field_types = {}
     for entity_fields in schema.values():
@@ -38,13 +38,13 @@ def classify_field(field_name: str, known_types: dict[str, str]) -> str:
     if lname in CONTEXTUAL_NAME_HINTS or any(hint in lname for hint in CONTEXTUAL_NAME_HINTS):
         return "contextual"
     if lname in AMBIGUOUS_FALLBACK_NEEDED:
-        return llm_classify_field(field_name)  # TODO: wire to Anthropic API
+        return llm_classify_field(field_name)  # TODO: wire to local Ollama (qwen3:8b) -- see WAREHOUSE/INTERMEDIATE/APP/CLASSIFIER.py for the pattern
     return "structured"  # safe default for unrecognized, non-text-like fields
 
 
 def llm_classify_field(field_name: str) -> str:
     """
-    TODO: call the Anthropic API with a short prompt like:
+    TODO: call local Ollama (qwen3:8b) with a short prompt like:
     "Classify this AICTE database field as structured, relational, or
     contextual: '{field_name}'. Reply with one word."
     Kept as a stub so the deterministic path never blocks on network/API cost.

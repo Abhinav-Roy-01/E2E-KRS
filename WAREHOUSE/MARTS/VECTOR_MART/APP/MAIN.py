@@ -2,17 +2,21 @@
 Picks up document_mart rows with no chunks yet, fetches the right source
 text (translated_text if the document wasn't originally English, otherwise
 the original staging extracted_text), chunks it, embeds each chunk, writes
-to vector_mart_chunks (Postgres, for BM25) AND Chroma (for vector search).
+to vector_mart_chunks (Postgres, for BM25/sparse) AND context_document
+(Postgres+pgvector, for dense vector search -- see VECTOR_STORE.py for why
+this replaced Chroma: same table shape and embedding model AICTE's context
+store uses, so both arms' vectors are directly comparable).
 
 Usage:
     python MAIN.py
 """
+import os
 import uuid
 
 from DB import get_connection
 from CHUNKER import chunk_text
-from EMBEDDER import embed_text
-from CHROMA_CLIENT import upsert_chunk
+from EMBEDDER import embed_text, MODEL as EMBEDDING_MODEL
+import VECTOR_STORE
 
 
 def get_source_text(cur, document_mart_id):
@@ -35,6 +39,11 @@ def get_source_text(cur, document_mart_id):
 
 def run():
     conn = get_connection()
+    try:
+        from pgvector.psycopg import register_vector
+        register_vector(conn)
+    except ImportError:
+        raise RuntimeError("pgvector not installed -- pip install -r REQUIREMENTS.TXT")
     cur = conn.cursor()
 
     cur.execute(
@@ -62,26 +71,25 @@ def run():
             embedding = embed_text(piece)
             chunk_id = str(uuid.uuid4())
 
-            upsert_chunk(
-                chunk_id=chunk_id,
+            VECTOR_STORE.insert_context(
+                conn,
+                entity_id=doc_id_str,
+                entity_type="document",
+                context_type=doc_type or None,
+                context_text=piece,
                 embedding=embedding,
-                document=piece,
-                metadata={
-                    "document_mart_id": doc_id_str,
-                    "department": department or "",
-                    "doc_type": doc_type or "",
-                    "language": language or "",
-                    "chunk_index": idx,
-                },
+                source_database="ekrs",
+                source_table="document_mart",
+                source_record_id=doc_id_str,
             )
 
             cur.execute(
                 """
                 INSERT INTO vector_mart_chunks
                     (id, document_mart_id, chunk_index, content, embedding_ref, embedding_model)
-                VALUES (%s, %s, %s, %s, %s, 'nomic-embed-text')
+                VALUES (%s, %s, %s, %s, %s, %s)
                 """,
-                (chunk_id, doc_id_str, idx, piece, chunk_id),
+                (chunk_id, doc_id_str, idx, piece, chunk_id, EMBEDDING_MODEL),
             )
 
         conn.commit()

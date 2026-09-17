@@ -5,5 +5,9 @@ __pycache__/
 .pytest_cache/
 DATA/PROCESSED/*
 !DATA/PROCESSED/.gitkeep
+DATA/RAW/*
+!DATA/RAW/.gitkeep
+*.pem
+*.key
 *.egg-info/
 .DS_Store
