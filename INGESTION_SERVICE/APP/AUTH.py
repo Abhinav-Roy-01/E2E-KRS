@@ -1,19 +1,12 @@
-"""
-Minimal API-key auth dependency, shared pattern across every FastAPI
-service in this project. Full RBAC (role/department/sensitivity-tier
-checks against DATABASE/SCHEMA/006_SECURITY.SQL's users and
-department_access_rules tables) is deliberately NOT built here -- that's
-scheduled as dedicated follow-up work, not something to bolt on inside a
-scaffolding pass. This gives every endpoint a real "who's allowed to call
-this at all" gate in the meantime, which is a large step up from zero.
-
-Usage in any service's MAIN.py:
-    from AUTH import require_api_key
-    @app.post("/ingest", dependencies=[Depends(require_api_key)])
-"""
 import os
 
+from dotenv import load_dotenv
 from fastapi import Header, HTTPException
+
+# find_dotenv() (load_dotenv() ke andar) parent directories mein upar
+# tak dhoondta hai .env -- isi wajah se ye chalega chahe uvicorn
+# service ke apne APP/ folder se start ho ya repo root se.
+load_dotenv()
 
 API_KEY = os.environ.get("API_KEY", "")
 
