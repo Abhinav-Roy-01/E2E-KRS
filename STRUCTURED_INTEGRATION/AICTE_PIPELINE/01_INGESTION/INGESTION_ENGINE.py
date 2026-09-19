@@ -73,8 +73,17 @@ def _mongo_live_dataframe(uri: str, database_name: str, collection_name: str, so
 
     if not docs:
         return pd.DataFrame(columns=["_id"]).pipe(lambda df: _stamp(df, source_system, source_database, collection_name))
+
     df = pd.json_normalize(docs)
-    return _stamp(df, source_system, source_database, collection_name)
+    df = _stamp(df, source_system, source_database, collection_name)
+
+    # applicable_institutes is a list-per-document; explode so entity
+    # resolution gets one real institution_name per row instead of a blank.
+    if "applicable_institutes" in df.columns:
+        df = df.explode("applicable_institutes", ignore_index=True)
+        df["institution_name"] = df["applicable_institutes"]
+
+    return df
 
 
 def _live_sources() -> dict[str, pd.DataFrame]:
