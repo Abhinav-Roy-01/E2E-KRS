@@ -21,16 +21,19 @@ LANG_CODE_MAP = {
 
 @lru_cache(maxsize=1)
 def _load_model(source_lang: str):
+    import os
     from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
     from IndicTransToolkit.processor import IndicProcessor
+
+    hf_token = os.environ.get("HF_TOKEN") or None
 
     model_name = (
         "ai4bharat/indictrans2-en-indic-1B"
         if source_lang == "en"
         else "ai4bharat/indictrans2-indic-en-1B"
     )
-    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-    model = AutoModelForSeq2SeqLM.from_pretrained(model_name, trust_remote_code=True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True, token=hf_token)
+    model = AutoModelForSeq2SeqLM.from_pretrained(model_name, trust_remote_code=True, token=hf_token)
     processor = IndicProcessor(inference=True)
     return tokenizer, model, processor
 
@@ -52,7 +55,7 @@ def translate(text: str, source_lang: str, target_lang: str) -> dict:
 
     batch = processor.preprocess_batch([text], src_lang=src_code, tgt_lang=tgt_code)
     inputs = tokenizer(batch, return_tensors="pt", padding=True, truncation=True)
-    outputs = model.generate(**inputs, max_length=512, num_beams=5)
+    outputs = model.generate(**inputs, max_length=512, num_beams=5, use_cache=False)
     decoded = tokenizer.batch_decode(outputs, skip_special_tokens=True)
     translated = processor.postprocess_batch(decoded, lang=tgt_code)[0]
 

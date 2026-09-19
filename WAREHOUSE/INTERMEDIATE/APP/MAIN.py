@@ -11,6 +11,8 @@ prove classification + translation first before adding dedup logic.
 Usage:
     python MAIN.py
 """
+from dotenv import load_dotenv
+load_dotenv()
 from DB import get_connection
 from CLASSIFIER import classify_document
 from TRANSLATOR import translate
