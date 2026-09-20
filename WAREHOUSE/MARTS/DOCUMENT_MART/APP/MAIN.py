@@ -23,6 +23,7 @@ load_dotenv()  # see INGESTION_SERVICE/APP/AUTH.py for the pattern
 
 from DB import get_connection
 from ROUTING import build_storage_path
+from VAULT import move_object
 
 CONFIDENCE_THRESHOLD = 0.85
 
@@ -34,7 +35,7 @@ def run():
     cur.execute(
         """
         SELECT
-            i.id, i.department, i.doc_type, i.classification_confidence,
+            i.id, i.department, i.doc_type, i.sensitivity_tier, i.classification_confidence,
             s.language, s.raw_document_id,
             r.original_filename, r.storage_key
         FROM intermediate_documents i
@@ -46,8 +47,8 @@ def run():
     pending = cur.fetchall()
     print(f"Found {len(pending)} document(s) pending promotion.")
 
-    for (intermediate_id, department, doc_type, confidence,
-         language, raw_doc_id, filename, storage_key) in pending:
+    for (intermediate_id, department, doc_type, sensitivity_tier, confidence,
+         language, raw_doc_id, filename, raw_storage_key) in pending:
         intermediate_id_str = str(intermediate_id)
 
         if not department or not doc_type or confidence is None or confidence < CONFIDENCE_THRESHOLD:
@@ -60,18 +61,25 @@ def run():
             conn.commit()
             continue
 
-        storage_path = build_storage_path(department, doc_type, filename)
+        sensitivity_tier = sensitivity_tier or "internal"
+        storage_path = build_storage_path(department, sensitivity_tier, doc_type, filename)
         print(f"[{intermediate_id_str}] promoting -> {storage_path}")
+
+        # The actual "routing" step -- move the object in MinIO from its
+        # meaningless ingestion-time UUID key to the routed path. Without
+        # this, storage_path was only ever a database string; the file
+        # itself stayed put. See VAULT.py for why copy-then-delete.
+        move_object(raw_storage_key, storage_path)
 
         cur.execute(
             """
             INSERT INTO document_mart
                 (intermediate_document_id, original_filename, department, doc_type,
                  language, storage_path, storage_key, sensitivity_tier, mart_status)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, 'internal', 'active')
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'active')
             RETURNING id
             """,
-            (intermediate_id_str, filename, department, doc_type, language, storage_path, storage_key),
+            (intermediate_id_str, filename, department, doc_type, language, storage_path, storage_path, sensitivity_tier),
         )
         document_mart_id = cur.fetchone()[0]
 

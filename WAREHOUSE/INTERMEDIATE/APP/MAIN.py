@@ -12,7 +12,8 @@ Usage:
     python MAIN.py
 """
 from dotenv import load_dotenv
-load_dotenv()
+load_dotenv()  # finds .env by walking up from cwd -- see INGESTION_SERVICE/APP/AUTH.py for the same pattern
+
 from DB import get_connection
 from CLASSIFIER import classify_document
 from TRANSLATOR import translate
@@ -61,14 +62,15 @@ def run():
         cur.execute(
             """
             INSERT INTO intermediate_documents
-                (staging_document_id, department, doc_type, classification_confidence,
+                (staging_document_id, department, doc_type, sensitivity_tier, classification_confidence,
                  translated_text, translation_confidence, intermediate_status)
-            VALUES (%s, %s, %s, %s, %s, %s, 'classified')
+            VALUES (%s, %s, %s, %s, %s, %s, %s, 'classified')
             """,
             (
                 staging_id_str,
                 classification.get("department"),
                 classification.get("doc_type"),
+                classification.get("sensitivity_tier"),
                 classification.get("confidence"),
                 translated_text,
                 translation_confidence,

@@ -27,3 +27,13 @@ CREATE TABLE IF NOT EXISTS intermediate_documents (
 CREATE INDEX IF NOT EXISTS idx_intermediate_documents_staging_id ON intermediate_documents(staging_document_id);
 CREATE INDEX IF NOT EXISTS idx_intermediate_documents_status ON intermediate_documents(intermediate_status);
 CREATE INDEX IF NOT EXISTS idx_intermediate_documents_department ON intermediate_documents(department);
+
+-- Sensitivity is decided at classification time (same LLM call as
+-- department/doc_type), then carried through to document_mart's routing
+-- decision and physical storage path -- not just a column that sits unused.
+ALTER TABLE intermediate_documents ADD COLUMN IF NOT EXISTS sensitivity_tier TEXT;
+DO $$ BEGIN
+    ALTER TABLE intermediate_documents ADD CONSTRAINT valid_intermediate_sensitivity_tier
+        CHECK (sensitivity_tier IS NULL OR sensitivity_tier IN ('public','internal','restricted','confidential'));
+EXCEPTION WHEN duplicate_object THEN NULL;  -- constraint already exists, re-running this file is safe
+END $$;

@@ -18,7 +18,9 @@ ROUTES = {
 }
 
 
-def build_storage_path(department: str, doc_type: str, filename: str) -> str:
+def build_storage_path(department: str, sensitivity_tier: str, doc_type: str, filename: str) -> str:
     year = datetime.utcnow().year
     subpath = ROUTES.get((department, doc_type), f"{department}/{doc_type}")
-    return f"{subpath}/{year}/{filename}"
+    doc_type_leaf = subpath.split("/", 1)[-1]  # drop the department prefix baked into ROUTES' values
+    sensitivity_label = (sensitivity_tier or "internal").capitalize()
+    return f"{department}/{sensitivity_label}/{doc_type_leaf}/{year}/{filename}"
