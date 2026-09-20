@@ -7,6 +7,9 @@ CREATE TABLE IF NOT EXISTS users (
     email        TEXT UNIQUE NOT NULL,
     role         TEXT NOT NULL,     -- 'admin' | 'department_head' | 'employee'
     department   TEXT,
+    api_key_hash TEXT UNIQUE,       -- sha256 of the real key; the raw key is
+                                     -- shown once at creation (SECURITY_SERVICE/APP/CREATE_USER.py)
+                                     -- and never stored or logged anywhere
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -26,9 +29,15 @@ CREATE TABLE IF NOT EXISTS audit_log (
     id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id          UUID REFERENCES users(id),
     document_mart_id UUID REFERENCES document_mart(id),
-    action           TEXT NOT NULL,   -- 'view' | 'query' | 'download' | 'route' | 'archive'
+    action           TEXT NOT NULL,   -- 'view' | 'query' | 'download' | 'route' | 'archive' | 'ingest'
     accessed_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_audit_log_user ON audit_log(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_log_doc ON audit_log(document_mart_id);
+
+-- Who actually submitted a document -- populated by INGESTION_SERVICE from
+-- the authenticated caller (DB-verified API key), never trusted from a
+-- client-supplied field. Nullable: older/pre-security rows and any future
+-- fully-automated connector (folder-watch) may have no human submitter.
+ALTER TABLE raw_documents ADD COLUMN IF NOT EXISTS submitted_by_user_id UUID REFERENCES users(id);

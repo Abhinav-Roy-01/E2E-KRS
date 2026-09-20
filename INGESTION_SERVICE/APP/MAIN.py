@@ -13,7 +13,7 @@ import hashlib
 import uuid
 
 from fastapi import Depends, FastAPI, UploadFile, File, HTTPException
-from AUTH import require_api_key
+from AUTH import get_current_user
 from STORAGE import upload_file, ensure_bucket
 from DB import get_connection
 
@@ -35,8 +35,8 @@ async def health():
     return {"status": "ok"}
 
 
-@app.post("/ingest", dependencies=[Depends(require_api_key)])
-async def ingest(file: UploadFile = File(...), source: str = "manual_upload"):
+@app.post("/ingest")
+async def ingest(file: UploadFile = File(...), source: str = "manual_upload", user: dict = Depends(get_current_user)):
     filetype = file.filename.split(".")[-1].lower()
     if filetype not in ALLOWED_FILETYPES:
         raise HTTPException(status_code=400, detail=f"Unsupported filetype: {filetype}")
@@ -69,10 +69,17 @@ async def ingest(file: UploadFile = File(...), source: str = "manual_upload"):
     cur.execute(
         """
         INSERT INTO raw_documents
-            (id, source, original_filename, storage_key, sha256_hash, filetype, raw_status)
-        VALUES (%s, %s, %s, %s, %s, %s, 'received')
+            (id, source, original_filename, storage_key, sha256_hash, filetype, raw_status, submitted_by_user_id)
+        VALUES (%s, %s, %s, %s, %s, %s, 'received', %s)
         """,
-        (str(doc_id), source, file.filename, object_key, sha256_hash, filetype),
+        (str(doc_id), source, file.filename, object_key, sha256_hash, filetype, str(user["id"])),
+    )
+    # document_mart_id is NULL here on purpose -- this document hasn't been
+    # promoted to document_mart yet (that happens later, in DOCUMENT_MART).
+    # This row is "user X ingested something", not "user X accessed record Y".
+    cur.execute(
+        "INSERT INTO audit_log (user_id, document_mart_id, action) VALUES (%s, NULL, 'ingest')",
+        (str(user["id"]),),
     )
     conn.commit()
     cur.close()

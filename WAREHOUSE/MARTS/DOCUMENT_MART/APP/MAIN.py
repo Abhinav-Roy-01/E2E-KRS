@@ -18,6 +18,9 @@ and threading it through WAREHOUSE/INTERMEDIATE, not solved in this file.
 Usage:
     python MAIN.py
 """
+from dotenv import load_dotenv
+load_dotenv()  # see INGESTION_SERVICE/APP/AUTH.py for the pattern
+
 from DB import get_connection
 from ROUTING import build_storage_path
 
@@ -71,6 +74,15 @@ def run():
             (intermediate_id_str, filename, department, doc_type, language, storage_path, storage_key),
         )
         document_mart_id = cur.fetchone()[0]
+
+        # Every routing decision gets logged, even though this is a batch
+        # job with no single authenticated caller -- user_id is NULL here
+        # (a system action, not a specific person's), but the WHAT and
+        # WHERE-it-went is exactly the audit trail a real deployment needs.
+        cur.execute(
+            "INSERT INTO audit_log (user_id, document_mart_id, action) VALUES (NULL, %s, 'route')",
+            (str(document_mart_id),),
+        )
 
         cur.execute(
             "UPDATE intermediate_documents SET intermediate_status = 'promoted' WHERE id = %s",
