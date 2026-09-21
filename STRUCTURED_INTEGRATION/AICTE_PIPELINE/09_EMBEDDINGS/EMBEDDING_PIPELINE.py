@@ -7,7 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "10_PGVECTOR"))
 
-from CONTEXT_BUILDER import build_internship_context
+from CONTEXT_BUILDER import build_internship_context, build_faculty_context
 from EMBEDDING_GENERATOR import embed_texts
 from VECTOR_STORE import get_connection, insert_context
 
@@ -45,6 +45,50 @@ def process_internship_records(internships_df):
 
     conn.close()
     print(f"Loaded {len(internships_df)} internship context documents into pgvector.")
+
+
+def process_faculty_records(faculty_df):
+    """
+    Same pattern as process_internship_records, for faculty rows -- takes
+    faculty_name, institution_name, research_interests (+ lineage cols) and
+    pushes each into pgvector. This is the live-data-wireable contextual
+    field: 07_CONTEXT_CLASSIFICATION already flags 'research_interests' as
+    contextual (mapped from the faculty source's `specialization` column,
+    see MAPPING_RULES.YAML) -- unlike internship performance remarks, which
+    have a real schema mismatch against the live AICTE_DB_MOCK data (see
+    STRUCTURED_INTEGRATION/README.MD) and stay deferred.
+    """
+    conn = get_connection()
+    loaded = 0
+
+    for _, row in faculty_df.iterrows():
+        research_interests = row.get("research_interests")
+        if not research_interests or not str(research_interests).strip():
+            continue  # nothing contextual to embed for this faculty row
+
+        context_text = build_faculty_context(
+            row.get("faculty_name", "Unknown faculty"),
+            row.get("institution_name", "Unknown institution"),
+            research_interests,
+        )
+        embedding = embed_texts([context_text])[0]
+
+        insert_context(
+            conn,
+            entity_id=str(row.get("faculty_id", row.name)),
+            entity_type="faculty",
+            context_type="research_interests",
+            context_text=context_text,
+            embedding=embedding,
+            source_database=row.get("source_database"),
+            source_table=row.get("source_table"),
+            source_record_id=row.get("source_record_id"),
+        )
+        loaded += 1
+
+    conn.close()
+    print(f"Loaded {loaded} faculty context documents into pgvector "
+          f"({len(faculty_df) - loaded} skipped, no research_interests value).")
 
 
 if __name__ == "__main__":

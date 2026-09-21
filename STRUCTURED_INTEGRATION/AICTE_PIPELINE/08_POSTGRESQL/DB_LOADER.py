@@ -61,6 +61,35 @@ def _record_lineage(conn, canonical_entity_id: str, row: pd.Series) -> None:
 
 # ── entity loaders ───────────────────────────────────────────────────────
 
+def _as_bool_or_none(value):
+    """
+    pd.concat() (in MAIN.py, joining all 4 sources) can silently upcast a
+    proper True/False/None column to float64 when one of the other sources
+    is missing that column entirely (concat fills the gap with NaN, and a
+    bool column next to an all-NaN float column gets promoted to float --
+    True/False become 1.0/0.0). Postgres's `approval_status BOOLEAN` column
+    then rejects the insert with a type mismatch. This re-normalizes right
+    before the INSERT, regardless of what dtype coercion happened upstream.
+    """
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return bool(value)
+    return value  # already a proper bool-ish value or unexpected type -- let Postgres judge
+
+
+def _as_int_or_none(value):
+    """Same concat-upcast risk as approval_status, applied to nirf_rank (INTEGER column)."""
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
 def upsert_institutions(conn, institutions_df: pd.DataFrame) -> None:
     for _, row in institutions_df.drop_duplicates("master_entity_id").iterrows():
         with conn.cursor() as cur:
@@ -77,7 +106,7 @@ def upsert_institutions(conn, institutions_df: pd.DataFrame) -> None:
                     naac_grade = COALESCE(EXCLUDED.naac_grade, institution.naac_grade)
                 """,
                 (row["master_entity_id"], row["institution_name"], row.get("state"),
-                 row.get("approval_status"), row.get("nirf_rank"), row.get("naac_grade")),
+                 _as_bool_or_none(row.get("approval_status")), _as_int_or_none(row.get("nirf_rank")), row.get("naac_grade")),
             )
         _record_entity_mapping(conn, row["master_entity_id"], "institution", row)
         _record_lineage(conn, row["master_entity_id"], row)
