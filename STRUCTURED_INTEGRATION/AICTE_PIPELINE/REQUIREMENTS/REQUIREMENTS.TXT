@@ -14,10 +14,16 @@ mysql-connector-python==9.1.0
 pymongo==4.10.1
 
 # Schema / quality
-great-expectations>=1.7.0
+great-expectations==1.2.4
 
 # Entity resolution
 splink==4.0.6
+
+# SQL validation for the Query Router (11_RETRIEVAL/QUERY_ROUTER.py) --
+# already came in transitively via splink, but QUERY_ROUTER.py imports it
+# directly, so it's pinned explicitly rather than depending on splink
+# keeping the same transitive requirement in some future version.
+sqlglot>=13.0.0
 
 # Embeddings + LLM synthesis -- both local, via Ollama HTTP API
 # (no sentence-transformers/torch, no cloud LLM SDK -- see .ENV.EXAMPLE)

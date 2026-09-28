@@ -26,8 +26,15 @@ def classify_query_type(question: str) -> str:
 
 
 def run_structured_query(question: str) -> str:
-    """TODO: Text-to-SQL against Postgres (08_POSTGRESQL). Stub for now."""
-    return "[structured retrieval not yet wired up]"
+    """
+    Rules -> SQL -> validated execution, via QUERY_ROUTER. See that module
+    for why this is scoped to the institution table only.
+    """
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    from QUERY_ROUTER import answer_structured
+    return answer_structured(question)
 
 
 def run_vector_query(question: str, top_k: int = 5) -> list[dict]:
