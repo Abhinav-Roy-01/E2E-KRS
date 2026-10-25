@@ -93,3 +93,9 @@ def query(req: QueryRequest, user: dict = Depends(get_current_user)):
         raise HTTPException(status_code=500, detail="Audit log unavailable -- answer withheld.")
     result["elapsed_ms"] = int((time.monotonic() - started) * 1000)
     return result
+
+
+
+import os
+from fastapi.staticfiles import StaticFiles
+app.mount("/ui", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "UI"), html=True), name="ui")
