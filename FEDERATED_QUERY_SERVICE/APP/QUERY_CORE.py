@@ -81,8 +81,9 @@ def _synthesize(question: str, sources: list) -> str:
     tagged = "\n".join(f"[S{i}] {s['context_text']}" for i, s in enumerate(sources, 1))
     prompt = (
         "Answer the question using ONLY the sources below. After every fact, cite the source "
-        "tag in square brackets, like [S1]. If the sources do not contain the answer, say "
-        "exactly that. Never use outside knowledge.\n\n"
+        "tag in square brackets, like [S1]. If the sources do not contain the answer, reply "
+        "with exactly this sentence and nothing else: I could not find this in the available records. "
+        "Never use outside knowledge.\n\n"
         f"QUESTION: {question}\n\nSOURCES:\n{tagged}\n\nANSWER:"
     )
     try:
@@ -145,8 +146,10 @@ def run_query(question: str) -> dict:
         conn = get_aicte_connection()
         embedding = embed_texts([question])[0]
         sources = similarity_search(conn, embedding, top_k=TOP_K)
+        sources = [s for s in sources if float(s.get("similarity", 1)) >= 0.5]
         result["sources"] = sources
-        result["answer"] = _synthesize(question, sources) if sources else "No relevant records were found."
+        result["answer"] = (_synthesize(question, sources) if sources
+                            else "I could not find this in the available records.")
         return result
 
     except Exception as e:  # never leak internals to the client; full detail goes to the server log

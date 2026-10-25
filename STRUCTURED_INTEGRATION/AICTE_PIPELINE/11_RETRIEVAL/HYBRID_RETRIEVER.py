@@ -18,9 +18,11 @@ def classify_query_type(question: str) -> str:
     based on Section 16 of the design doc: numeric/count/list questions are
     structured; "why/how/what kind of" questions about qualities are contextual.
     """
-    structured_markers = ("how many", "count", "list all", "which state", "rank")
+    import re
+    structured_markers = ("how many", "count", "list all", "which state", "rank",
+                          "number of", "most institutes", "fewest institutes")
     q = question.lower()
-    if any(m in q for m in structured_markers):
+    if any(m in q for m in structured_markers) or re.search(r"\bwhich\s+(?:\w+\s+)?states\b", q):
         return "structured"
     return "hybrid"
 

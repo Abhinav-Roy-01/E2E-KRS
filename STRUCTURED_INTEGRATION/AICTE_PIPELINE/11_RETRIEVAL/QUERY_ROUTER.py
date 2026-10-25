@@ -100,6 +100,8 @@ def generate_sql_via_llm(question: str) -> str | None:
         f"Generate a single PostgreSQL SELECT statement to answer this question.\n"
         f"Use ONLY this table, no others:\n{INSTITUTION_SCHEMA}\n"
         f"Rules: SELECT only. No other tables. No semicolons. No comments. "
+        f"Some institutions have a blank or NULL state. When grouping, ranking "
+        f"or counting by state, always add WHERE state IS NOT NULL AND state <> ''. "
         f"Output ONLY the SQL, nothing else.\n\n"
         f"Question: {question}\nSQL:"
     )
